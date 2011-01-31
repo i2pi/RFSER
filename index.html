@@ -1,0 +1,333 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Really Fucking Simple Expense Reports</title>
+	<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js'></script>
+	<script type='text/javascript' src='/jquery.form.js'></script>
+	<link href='http://fonts.googleapis.com/css?family=Lekton' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=PT+Sans' rel='stylesheet' type='text/css'>
+	<style>
+		h1 {
+			font-family: 'PT Sans';
+		}
+		div#main {
+			width: 680px;
+			margin: auto;
+			font-family: 'Lekton';
+		}
+		input[type='text'] {
+			border: none;
+			border-bottom: 1px dashed #888;
+			background: #fffadb;
+			font-family: 'Lekton';
+			font-size: 1.2em;
+		}
+
+		input[type='button'] {
+			border: 1px solid black;
+			background: #ddd;
+			text-shadow: 0 1px white;
+			border-radius: 4px;
+			-moz-border-radius: 4px;
+			height: 2.1em;
+		}
+
+
+		input[type='text']:disabled {
+			background: #fafafa;
+		}
+		input[type='file'] {
+			width: 50px;
+			opacity: 0;	
+			cursor: pointer;
+		}
+		.receiptCol {
+			width: 50px;	
+			height: 50px;
+			overflow: hidden;
+			cursor: pointer;
+			text-align: left;
+		}	
+
+		.imageForm {
+			margin: 0px;
+		}
+
+		.descriptionCol, input[name='description'] {
+			width: 450px;
+			text-align: right;
+		}
+		
+		.amountCol, input[name='amount'] {
+			width: 150px;
+			text-align: right;
+		}
+
+		.inputRow {
+			margin-top: 2em;
+		}
+
+		#total {
+			border-top: 1px double black;
+			border-width: 4px;
+			font-size: 1.5em;
+		}
+	
+
+		table {
+			text-align: right;
+		}
+		
+		th {
+			border-bottom: 1px solid black;
+			height: 1.5em !important;
+		}
+		
+		tr {
+			margin: 0.5em;
+		}
+
+		ul {
+			list-style-type: none;
+			padding: 0px;
+		}
+		li {
+			margin-bottom: 0.5em;
+		}
+		#reportName {
+			font-size: 1.5em;
+		}
+
+		.invalid { border: 1px dotted red !important; }
+
+		#nav {
+			margin-top: 5em;
+			text-align: right;
+		}
+	</style>
+
+	<script type='text/javascript'>
+		var receiptUploadOptions = {
+			success: handleReceiptUpload,
+			dataType: 'json'
+		};
+
+		function calcTotal() {
+			var subTotal = 0;
+
+			$('.inputRow > td > input[name="amount"]').each(function(idx,e) {
+				amt = parseFloat($(e).val());
+				if (!isNaN(amt) && (amt > 0)) {
+					subTotal += amt;
+				}
+			});
+
+			$('#total').text('$' + subTotal);
+
+			$('.inputRow > td > input[name="amount"]').change(calcTotal);
+		}
+	
+		function validate() {
+			var isValid = true;
+		
+			var reportName = $('input#reportName').val();
+			var employee = $('input#employee').val();
+
+			if (reportName == 'Report Name' || reportName.length == 0) {
+				$('input#reportName').addClass('invalid');
+				isValid = false;
+			} else {
+				$('input#reportName').removeClass('invalid');
+			}
+
+			if (employee == 'Your Name' || employee.length == 0) {
+				$('input#employee').addClass('invalid');
+				isValid = false;
+			} else {
+				$('input#employee').removeClass('invalid');
+			}
+
+			$('.inputRow > td > input[name="description"]:enabled').each(function(idx,e){
+				if ($(e).val().length < 3) {
+					$(e).addClass('invalid');
+					isValid = false;
+				} else {
+					$(e).removeClass('invalid');
+				}
+			});
+
+			$('.inputRow > td > input[name="amount"]:enabled').each(function(idx,e){
+				var amt = parseFloat($(e).val());
+				if (amt <= 0 || isNaN(amt)) {
+					$(e).addClass('invalid');
+					isValid = false;
+				} else {
+					$(e).removeClass('invalid');
+				}
+			});
+			return isValid;
+		}
+
+		function handleReceiptUpload (response, statusText, xhr, form) {
+			form.empty();
+			var img = form.siblings('img')[0];
+			$(img).attr("src", '/receipt/' + response['receipt_id'] + '/image');
+			form.parent().parent().attr('receipt_id', response['receipt_id']);
+		}
+
+		function addRow() {
+			var summary = $('.totalRow').clone();
+			$('.totalRow').remove();
+		
+			$('.inputRow:last > td > form.imageForm').ajaxSubmit(receiptUploadOptions);
+
+			var clone = $('.inputRow:last').clone()
+
+			$('.inputRow:last > td > input').removeAttr('disabled');
+
+			$(clone).css('display', 'none');
+
+			$(clone).appendTo('table');
+			$('.inputRow:last > td > input').val('');
+			$('.inputRow:last > td > form > input').val('');
+
+			$('.inputRow:last > td > form > input:file').change(addRow);
+			$('.inputRow:last > td > form.imageForm').ajaxForm();
+		
+			summary.appendTo('table');
+			$('.inputRow > td > input[name="amount"]').change(calcTotal);
+
+			$('.inputRow:last').slideDown('slow');
+		}
+
+		function saveReport() {
+
+			var isValid = validate();
+
+			if (!isValid) return;
+
+			var reportName = $('input#reportName').val();
+			var employee = $('input#employee').val();
+
+			$.post(window.location.pathname, {reportName: reportName, employee: employee});
+
+			$('.inputRow').each(function(idx,e) {
+				var receipt_id = $(e).attr('receipt_id');
+				if (receipt_id != undefined) {
+					var amount = $(e).find('input[name="amount"]').val();
+					var description = $(e).find('input[name="description"]').val();
+					$.post('/receipt/' + receipt_id + '/details', {amount: amount, description: description});
+				}
+			});
+		}
+
+		function createReceipt(receipt_id, description, amount) {
+			var clone = $('.inputRow:last').clone()
+			$(clone).find('input[name="amount"]').val(amount);
+			$(clone).find('input[name="description"]').val(description);
+			$(clone).find('input[name="description"]').val(description);
+			$(clone).find('input:file').remove();
+			$(clone).find('img').attr("src", '/receipt/' + receipt_id + '/image');
+			$(clone).appendTo('table');
+		}
+
+		function loadReportReceipts(data) {
+			var receipts = eval(data); // TODO : evil
+
+			for (r in receipts) {
+				createReceipt(receipts[r]['receipt_id'], receipts[r]['description'], receipts[r]['amount']);
+			}
+
+			if (receipts.length > 0) {
+				// If there is any data, don't let people add more data
+				$('.inputRow:first').remove();
+				$('#save').remove();
+
+				$('#reimburse').show();
+				$('#collection').show();
+
+				var clone = $('.totalRow').clone();
+				$('.totalRow').remove();
+				$(clone).appendTo('table');
+				calcTotal();	
+			}
+		}
+
+		function loadReportDetails(data) {
+			var details = eval(data)[0];
+			$('input#reportName').val(details['reportName']);
+			$('input#employee').val(details['employee']);
+			$('div#reimbursed > span').text(details['reimbursed']);
+			if (details['reimbursed'] != 'No') $('#reimburse').hide();
+		}
+
+		function collect () {
+			var curl = $('input[name="url"]').val();
+			var report_id = window.location.pathname.split('/').pop();
+			$.post(curl + '/add/' + report_id);
+		}	
+
+		jQuery(document).ready(function() {
+			$('#reportName').focus();
+			$.get(window.location.pathname + '/receipts', loadReportReceipts);
+			$.get(window.location.pathname + '/details', loadReportDetails);
+
+			$('.inputRow:last > td > form.imageForm').ajaxForm();
+
+			$('#save').click(saveReport);
+			$('#reimburse').click($.post(window.location.pathname + '/reimburse'));
+			$('#collect').click(collect);
+
+			$('.inputRow:last > td > form > input:file').change(addRow);
+			$('.inputRow > td > input[name="amount"]').keypress(calcTotal);
+			$('.inputRow > td > input[name="amount"]').change(calcTotal);
+		})
+	</script>
+</head>
+<body>
+	<div id="main">
+		<h1>Really Fucking Simple Expense Reports</h1>
+		<ul id="report">
+			<li>
+				<input type="text" id="reportName" value="Report Name">
+			</li>
+			<li>
+				<input type="text" id="employee" value="Your Name">
+			</li>
+			<li id='reimbursed'>
+				Reimbursed: <span></span>
+			</li>
+		</ul>
+		<div id="details">
+			<table>
+				<tr>
+					<th class='receiptCol'>Receipt</th>
+					<th class='descriptionCol'>Description</th>
+					<th class='amountCol'>Amount</th>
+				</tr>
+				<tr class="inputRow">
+					<td class='receiptCol'>
+						<img width="50px" height="50px">
+						<form action="/receipt/image" method="POST" class="imageForm" enctype="multipart/form-data"> 
+							<input type="file" name='receipt'>
+						</form>
+					</td>
+					<td class='descriptionCol'><input type="text" name='description' disabled='true'></td>
+					<td class='amountCol'><input type="text" name='amount' disabled='true'></td>
+				</tr>
+				<tr class="totalRow">
+					<td id='total' colspan='3'>$0.00</td>
+				</tr>
+			</table>
+		</div>
+		<div id="nav">
+			<input id='save' type="button" value="Done">
+			<input id='reimburse' type="button" value="Reimburse" style="display: none;">
+			<div id='collection' style="display: none;">
+				<input type='text' name='url' value="Collection URL">
+				<input id='collect' type='button' value="Add Report to Collection">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

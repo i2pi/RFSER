@@ -1,0 +1,97 @@
+h1 {
+	font-family: 'PT Sans';
+}
+div#main {
+	width: 680px;
+	margin: auto;
+	font-family: 'Lekton';
+}
+input[type='text'] {
+	border: none;
+	border-bottom: 1px dashed #888;
+	background: #fffadb;
+	font-family: 'Lekton';
+	font-size: 1.2em;
+}
+
+input[type='button'] {
+	border: 1px solid black;
+	background: #ddd;
+	text-shadow: 0 1px white;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+	height: 2.1em;
+}
+
+
+input[type='text']:disabled {
+	background: #fafafa;
+}
+input[type='file'] {
+	width: 50px;
+	opacity: 0;	
+	cursor: pointer;
+}
+.receiptCol {
+	width: 50px;	
+	height: 50px;
+	overflow: hidden;
+	cursor: pointer;
+	text-align: left;
+}	
+
+.imageForm {
+	margin: 0px;
+}
+
+.descriptionCol, input[name='description'] {
+	width: 450px;
+	text-align: right;
+}
+
+.amountCol, input[name='amount'] {
+	width: 150px;
+	text-align: right;
+}
+
+.inputRow {
+	margin-top: 2em;
+}
+
+#total {
+	border-top: 1px double black;
+	border-width: 4px;
+	font-size: 1.5em;
+}
+
+
+table {
+	text-align: right;
+}
+
+th {
+	border-bottom: 1px solid black;
+	height: 1.5em !important;
+}
+
+tr {
+	margin: 0.5em;
+}
+
+ul {
+	list-style-type: none;
+	padding: 0px;
+}
+li {
+	margin-bottom: 0.5em;
+}
+#reportName {
+	font-size: 1.5em;
+}
+
+.invalid { border: 1px dotted red !important; }
+
+#nav {
+	margin-top: 5em;
+	text-align: right;
+}

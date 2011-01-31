@@ -1,0 +1,30 @@
+DROP TABLE report CASCADE;
+CREATE TABLE report (
+	report_id	TEXT PRIMARY KEY,
+	created		TIMESTAMP DEFAULT now(),
+	submitted	TIMESTAMP,
+	reimbursed	TIMESTAMP,
+	name		TEXT,
+	employee	TEXT
+);
+
+DROP TABLE receipt CASCADE;
+CREATE TABLE receipt (
+	receipt_id	TEXT PRIMARY KEY,
+	report_id	TEXT REFERENCES report(report_id),
+	description	TEXT,
+	amount		NUMERIC(16,4)
+);
+
+
+DROP TABLE library CASCADE;
+CREATE TABLE library (
+	library_id	TEXT PRIMARY KEY
+);
+
+DROP TABLE library_report;
+CREATE TABLE library_report (
+	library_id	TEXT REFERENCES library(library_id),
+	report_id	TEXT REFERENCES report(report_id)	
+);
+CREATE INDEX library_report_library_idx ON library_report(library_id);
