@@ -1,17 +1,19 @@
 # rfser
 
+Really Fucking Simple Expense Reports
+
 # requirements
 
 * PostgreSQL 8+
-* PCRE
+* PCRE (apt-get install libpcre3 libpcre3-dev)
 * uwsgi
 * nginx 
-* virtualenv
+* setuptools / pip / virtualenv
 * Python requirements (see REQUIREMENTS)
 
 # building
 
-* cd .. && virtualenv --distribute mintswitcher
+* cd .. && virtualenv --distribute rfser
 * . bin/activate
 * pip install -r REQUIREMENTS
 * mkdir pkg && cd pkg
@@ -22,7 +24,6 @@
 * cp uwsgi $VIRTUAL_ENV/bin/
 * cd ..
 * wget http://nginx.org/download/nginx-0.8.49.tar.gz
-* cd $VIRTUAL_ENV/pkg
 * tar xzvf nginx-0.8.49.tar.gz 
 * cd nginx-0.8.49/
 * ./configure --with-http_ssl_module
