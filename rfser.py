@@ -205,7 +205,7 @@ class CollectionAdd:
 		return "OK"
 
 
-conn = psycopg2.connect(database='rfser', host='localhost')
+conn = psycopg2.connect(database='rfser', host='localhost', user='rfser', password='B3zhD9K39:,iq846TjAM%Wz')
 
 if __name__ == "__main__":
 	app = web.application(urls, globals(), autoreload=True) 
