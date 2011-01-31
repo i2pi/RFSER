@@ -9,8 +9,7 @@ from distutils.dir_util import mkpath
 
 import pprint
 
-urls = ('/jquery.form.js', 'JQueryForm',
-		'/', 'Index',
+urls = ('/', 'Index',
 		'/report/(.*)/receipts', 'ReportReceipts',
 		'/report/(.*)/details', 'ReportDetails',
 		'/report/(.*)/reimburse', 'ReportReimburse',
@@ -23,8 +22,11 @@ urls = ('/jquery.form.js', 'JQueryForm',
 
 IMG_PATH = 'images/'
 
+def get_db_conn():
+	return psycopg2.connect(database='rfser', host='localhost', user='rfser', password='B3zhD9K39:,iq846TjAM%Wz')
 
-def gen_new_id(table):
+
+def gen_new_id(conn, table):
 	new_id = ''.join(random.choice(string.ascii_letters) for x in range(10))
 	cur = conn.cursor()
 	sql = "INSERT INTO %s (%s_id) " % (table, table) + 'VALUES (%(new_id)s)';
@@ -33,17 +35,24 @@ def gen_new_id(table):
 		conn.commit();
 	except psycopg2.IntegrityError:
 		new_id = gen_new_id(table)
+	cur.close()
 	return new_id
 
 class Index:
 	def GET(self):
-		raise web.seeother('/report/' + gen_new_id('report'))
+		conn = get_db_conn()
+		new_id = gen_new_id(conn, 'report')
+		conn.close()
+		raise web.seeother('/report/' + new_id)
 
 
 class Report:
 	def GET(self, report_id):
 		if len(report_id) < 3:
-			raise web.seeother('/report/' + gen_new_id('report'))
+			conn = get_db_conn()
+			new_id = gen_new_id(conn, 'report')
+			conn.close()
+			raise web.seeother('/report/' + new_id)
 		return open('index.html').read()
 
 	def POST(self, report_id):
@@ -59,14 +68,18 @@ class Report:
 		if len(data['employee']) < 2:
 			return web.badrequest('Employee name too short')
 
+		conn = get_db_conn()
 		cur = conn.cursor()
 		cur.execute("""UPDATE report
 		               SET name=%(reportName)s, employee=%(employee)s, submitted=now() 
 		               WHERE report_id = %(report_id)s""", data)
 		conn.commit()
+		conn.close()
+		return "OK"
 
 class ReportDetails:
 	def GET(self, report_id):
+		conn = get_db_conn()
 		cur = conn.cursor()
 		cur.execute("""SELECT name, employee, COALESCE(TO_CHAR(reimbursed, 'Mon D, YYYY HH:MMam'), 'No') 
 		               FROM report WHERE report_id = %(report_id)s""", {'report_id': report_id});
@@ -82,18 +95,23 @@ class ReportDetails:
 		if employee is None:
 			employee = 'Your Name'
 
+		conn.close()
+
 		return "[{reportName: \"%s\", employee: \"%s\", reimbursed: \"%s\"}]" % (reportName, employee, row[2]);
 
 class ReportReimburse:
 	def POST(self, report_id):
+		conn = get_db_conn()
 		cur = conn.cursor()
 		cur.execute("""UPDATE report SET reimbursed = now() WHERE reimbursed IS NULL AND report_id=%(report_id)s""", {'report_id': report_id});
 		conn.commit()
+		conn.close()
 		
 		return "OK"
 
 class ReportReceipts:
 	def GET(self, report_id):
+		conn = get_db_conn()
 		cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 		cur.execute("""SELECT receipt_id, COALESCE(amount,0), COALESCE(description, '')
 		               FROM receipt WHERE report_id = %(report_id)s""",
@@ -104,13 +122,9 @@ class ReportReceipts:
 		for r in rows:
 			jrow.append('{receipt_id: \"%s\", amount: %s, description: \"%s\"}' % (r[0], r[1], r[2]))
 
+		conn.close()
+
 		return '[' + ','.join(jrow) + ']'
-
-
-
-class JQueryForm:
-	def GET(self):
-		return open('jquery.form.js').read()
 
 class ReceiptImage:
 	def POST(self):
@@ -122,21 +136,23 @@ class ReceiptImage:
 
 		referer = web.ctx.env.get('HTTP_REFERER')
 		report_id = referer.split('/')[::-1][0]
-			
+	
+		conn = get_db_conn()		
 		cur = conn.cursor()
 		cur.execute("""SELECT * FROM report WHERE report_id = %(report_id)s AND submitted IS NULL""",
 		            {'report_id': report_id})
 		rows = cur.fetchall()
 		if len(rows) != 1:
-			print "TRYING TO ADD IMAGE TO SUBMITTED REPORT %d" % len(rows)
+			conn.close()
 			return web.forbidden("Can't alter a report that has already been submitted");
 
-		receipt_id = gen_new_id('receipt')
+		receipt_id = gen_new_id(conn, 'receipt')
 
 		cur = conn.cursor()
 		cur.execute("""UPDATE receipt SET report_id = %(report_id)s WHERE receipt_id = %(receipt_id)s""",
 		            {'report_id': report_id, 'receipt_id': receipt_id})
 		conn.commit()
+		conn.close()
 
 		path = IMG_PATH + receipt_id[0] + '/' + receipt_id[1] + '/'
 		mkpath(path)
@@ -149,7 +165,6 @@ class ReceiptImage:
 	def GET(self, receipt_id):
 		if len(receipt_id) < 4:
 			return web.badrequest()
-
 		path = IMG_PATH + receipt_id[0] + '/' + receipt_id[1] + '/'
 		fp = open(path + receipt_id + "_original")
 		img = fp.read()
@@ -178,34 +193,35 @@ class ReceiptDetails:
 		if 'description' not in data.keys():
 			return web.badrequest()
 
+		conn = get_db_conn()
 		cur = conn.cursor()
 		cur.execute("""UPDATE receipt 
 		               SET amount=%(amount)s, description = %(description)s 
 		               WHERE receipt_id = %(receipt_id)s AND report_id = %(report_id)s""", data)
 		conn.commit()
+		conn.close()
 
 		return "OK"
 
 class Collection:
 	def GET(self, collection_id):
 		if len(collection_id) == 0:
-			raise web.seeother('/collection/' + gen_new_id('collection'))
-
+			conn = get_db_conn()
+			new_id = gen_new_id(conn, 'collection')
+			conn.close()
+			raise web.seeother('/collection/' + new_id)
 		return collection_id
-			
-		
 
 class CollectionAdd:
 	def POST(self, collection_id, report_id):
+		conn = get_db_conn()
 		cur = conn.cursor()
 		cur.execute("""INSERT INTO collection_report (collection_id, report_id) 
 		               VALUES (%(collection_id)s, %(report_id)s)""", {'collection_id': collection_id,
 		               'report_id': report_id})
 		conn.commit()
+		conn.close()
 		return "OK"
-
-
-conn = psycopg2.connect(database='rfser', host='localhost', user='rfser', password='B3zhD9K39:,iq846TjAM%Wz')
 
 if __name__ == "__main__":
 	app = web.application(urls, globals(), autoreload=True) 
