@@ -25,6 +25,8 @@ input[type='button'] {
 
 input[type='text']:disabled {
 	background: #fafafa;
+	border-bottom: 1px dashed #ccc;
+	color: #000;
 }
 input[type='file'] {
 	width: 50px;

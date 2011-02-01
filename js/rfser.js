@@ -3,17 +3,40 @@ var receiptUploadOptions = {
 	dataType: 'json'
 };
 
-function calcTotal() {
+function parseMoney(str) {
+	var x = str.replace(/[$,]/g, '');
+	return parseFloat(x);
+}
+
+function formatCurrency(num) {
+	num = num.toString().replace(/\$|\,/g,'');
+	if(isNaN(num)) num = "0";
+	sign = (num == (num = Math.abs(num)));
+	num = Math.floor(num*100+0.50000000001);
+	cents = num%100;
+	num = Math.floor(num/100).toString();
+	if(cents<10) cents = "0" + cents;
+	for (var i = 0; i < Math.floor((num.length-(1+i))/3); i++)
+	num = num.substring(0,num.length-(4*i+3))+','+
+	num.substring(num.length-(4*i+3));
+	return (((sign)?'':'-') + '$' + num + '.' + cents);
+}
+
+function getTotal () {
 	var subTotal = 0;
 
 	$('.inputRow > td > input[name="amount"]').each(function(idx,e) {
-		amt = parseFloat($(e).val());
+		amt = parseMoney($(e).val());
 		if (!isNaN(amt) && (amt > 0)) {
 			subTotal += amt;
 		}
 	});
 
-	$('#total').text('$' + subTotal);
+	return (subTotal);
+}
+
+function calcTotal() {
+	$('#total').text(formatCurrency(getTotal()));
 }
 	
 function validate() {
@@ -46,7 +69,7 @@ function validate() {
 	});
 
 	$('.inputRow > td > input[name="amount"]:enabled').each(function(idx,e){
-		var amt = parseFloat($(e).val());
+		var amt = parseMoney($(e).val());
 		if (amt <= 0 || isNaN(amt)) {
 			$(e).addClass('invalid');
 			isValid = false;
@@ -54,6 +77,14 @@ function validate() {
 			$(e).removeClass('invalid');
 		}
 	});
+
+	if (isValid && (getTotal() <= 0)) {
+		isValid = false;
+		$('#total').addClass('invalid');
+	} else {
+		$('#total').removeClass('invalid');
+	}
+	
 	return isValid;
 }
 
@@ -152,10 +183,12 @@ function loadReportDetails(data) {
 	var details = eval(data)[0]; //TODO: Evil
 	if (details['reportName'] != '') {
 		$('input#reportName').val(details['reportName']);
+		$('input#reportName').attr('disabled', 'true');
 		$('#reportName_placeholder').hide();
 	}
 	if (details['employee'] != '') {
 		$('input#employee').val(details['employee']);
+		$('input#employee').attr('disabled', 'true');
 		$('#employee_placeholder').hide();
 	}
 	$('li#reimbursed > span').text(details['reimbursed']);
@@ -167,6 +200,12 @@ function collect () {
 	var report_id = window.location.pathname.split('/').pop();
 	$.post(curl + '/add/' + report_id);
 }	
+
+function reimburse () {
+	$.post(window.location.pathname + '/reimburse', function (){
+		$.get(window.location.pathname + '/details', loadReportDetails);
+	});
+}
 
 jQuery(document).ready(function() {
 	$('input[placeholder],textarea[placeholder]').placeholder();
@@ -183,9 +222,7 @@ jQuery(document).ready(function() {
 	$('.inputRow:last > td > form.imageForm').ajaxForm();
 
 	$('#save').click(saveReport);
-	$('#reimburse').click(function(){
-		$.post(window.location.pathname + '/reimburse');
-	});
+	$('#reimburse').click(reimburse);
 	$('#collect').click(collect);
 
 	$('.inputRow:last > td > form > input:file').change(addRow);
