@@ -1,0 +1,11 @@
+*.pyc
+*.swp
+*.swo
+images/
+bin/
+include/
+lib/
+logs/
+pid/
+pkg/
+build/

@@ -34,7 +34,8 @@ def gen_new_id(conn, table):
 		cur.execute(sql, {'new_id': new_id})
 		conn.commit();
 	except psycopg2.IntegrityError:
-		new_id = gen_new_id(table)
+		conn.commit();
+		new_id = gen_new_id(conn, table)
 	cur.close()
 	return new_id
 
@@ -90,10 +91,10 @@ class ReportDetails:
 
 		reportName = row[0]
 		if reportName is None:
-			reportName = 'Report Name'
+			reportName = ''
 		employee = row[1]
 		if employee is None:
-			employee = 'Your Name'
+			employee = ''
 
 		conn.close()
 

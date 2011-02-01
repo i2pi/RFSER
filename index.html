@@ -7,6 +7,8 @@
 	<link href='/css/style.css' rel='stylesheet' type='text/css'>
 	<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js'></script>
 	<script type='text/javascript' src='/js/jquery.form.js'></script>
+	<script type='text/javascript' src='/js/jquery.placeholder.js'></script>
+	<script type='text/javascript' src='/js/si.files.js'></script>
 	<script type='text/javascript' src='/js/rfser.js'></script>
 </head>
 <body>
@@ -14,10 +16,10 @@
 		<h1>Really Fucking Simple Expense Reports</h1>
 		<ul id="report">
 			<li>
-				<input type="text" id="reportName" value="Report Name">
+				<input type="text" id="reportName" placeholder="Report Name">
 			</li>
 			<li>
-				<input type="text" id="employee" value="Your Name">
+				<input type="text" id="employee" placeholder="Your Name">
 			</li>
 			<li id='reimbursed'>
 				Reimbursed: <span></span>
@@ -34,7 +36,7 @@
 					<td class='receiptCol'>
 						<img width="50px" height="50px">
 						<form action="/receipt/image" method="POST" class="imageForm" enctype="multipart/form-data"> 
-							<input type="file" name='receipt'>
+							<input type="file" name='receipt' class='file'>
 						</form>
 					</td>
 					<td class='descriptionCol'><input type="text" name='description' disabled='true'></td>
