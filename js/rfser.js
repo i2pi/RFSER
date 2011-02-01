@@ -93,7 +93,6 @@ function addRow() {
 }
 
 function saveReport() {
-
 	var isValid = validate();
 
 	if (!isValid) return;
@@ -111,6 +110,10 @@ function saveReport() {
 			$.post('/receipt/' + receipt_id + '/details', {amount: amount, description: description});
 		}
 	});
+
+	$('#save').fadeOut(function(){
+		$('#finishedReport').fadeIn();
+	});	
 }
 
 function createReceipt(receipt_id, description, amount) {
@@ -136,8 +139,7 @@ function loadReportReceipts(data) {
 		$('.inputRow:first').remove();
 		$('#save').remove();
 
-		$('#reimburse').show();
-		$('#collection').show();
+		$('#finishedReport').show();
 
 		var clone = $('.totalRow').clone();
 		$('.totalRow').remove();
@@ -147,12 +149,16 @@ function loadReportReceipts(data) {
 }
 
 function loadReportDetails(data) {
-	var details = eval(data)[0];
-	if (details['reportName'] != '') 
+	var details = eval(data)[0]; //TODO: Evil
+	if (details['reportName'] != '') {
 		$('input#reportName').val(details['reportName']);
-	if (details['employee'] != '') 
+		$('#reportName_placeholder').hide();
+	}
+	if (details['employee'] != '') {
 		$('input#employee').val(details['employee']);
-	$('div#reimbursed > span').text(details['reimbursed']);
+		$('#employee_placeholder').hide();
+	}
+	$('li#reimbursed > span').text(details['reimbursed']);
 	if (details['reimbursed'] != 'No') $('#reimburse').hide();
 }
 
@@ -171,14 +177,15 @@ jQuery(document).ready(function() {
 
 	SI.Files.stylizeAll();
 
-
 	$.get(window.location.pathname + '/receipts', loadReportReceipts);
 	$.get(window.location.pathname + '/details', loadReportDetails);
 
 	$('.inputRow:last > td > form.imageForm').ajaxForm();
 
 	$('#save').click(saveReport);
-	$('#reimburse').click($.post(window.location.pathname + '/reimburse'));
+	$('#reimburse').click(function(){
+		$.post(window.location.pathname + '/reimburse');
+	});
 	$('#collect').click(collect);
 
 	$('.inputRow:last > td > form > input:file').change(addRow);

@@ -2,7 +2,7 @@ h1 {
 	font-family: 'PT Sans';
 }
 div#main {
-	width: 680px;
+	width: 690px;
 	margin: auto;
 	font-family: 'Lekton';
 }
@@ -22,7 +22,6 @@ input[type='button'] {
 	-moz-border-radius: 4px;
 	height: 2.1em;
 }
-
 
 input[type='text']:disabled {
 	background: #fafafa;
@@ -65,6 +64,10 @@ input[type='file'] {
 	font-size: 1.5em;
 }
 
+li#reimbursed > span {
+	font-weight: bold;
+}
+
 
 table {
 	text-align: right;
@@ -95,6 +98,10 @@ li {
 #nav {
 	margin-top: 5em;
 	text-align: right;
+}
+
+#collection {
+	margin-top: 1em;
 }
 
 /*match placeholder/watermark padding to border+padding for input element*/
