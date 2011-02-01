@@ -88,11 +88,25 @@ function validate() {
 	return isValid;
 }
 
+function imageZoom(img) {
+	$(img).click(function(){
+		var src = $(this).attr('src');
+		$('#imageZoom > img').attr('src', src);
+		$('#imageZoom > img').css('width', '700px');
+		$('#zoom').show();
+		$('#imageZoom').show();
+	});
+}
+	
+
 function handleReceiptUpload (response, statusText, xhr, form) {
 	form.empty();
 	$(form).css('background','none');
 	var img = form.siblings('img')[0];
+	imageZoom(img);
 	$(img).attr("src", '/receipt/' + response['receipt_id'] + '/image');
+	$(img).css("width", '50px');
+	$(img).css("height", '50px');
 	form.parent().parent().attr('receipt_id', response['receipt_id']);
 }
 
@@ -154,7 +168,11 @@ function createReceipt(receipt_id, description, amount) {
 	$(clone).find('input[name="description"]').val(description);
 	$(clone).find('input:file').remove();
 	$(clone).find('.imageForm').css('background','none');
-	$(clone).find('img').attr("src", '/receipt/' + receipt_id + '/image');
+	var img = $(clone).find('img');
+	img.attr("src", '/receipt/' + receipt_id + '/image');
+	img.css("width", '50px');
+	img.css("height", '50px');
+	imageZoom(img);
 	$(clone).appendTo('table');
 }
 
@@ -220,6 +238,11 @@ jQuery(document).ready(function() {
 	$.get(window.location.pathname + '/details', loadReportDetails);
 
 	$('.inputRow:last > td > form.imageForm').ajaxForm();
+
+	$('#imageZoom').click(function(){
+		$('#zoom').hide();
+		$('#imageZoom').hide();
+	});
 
 	$('#save').click(saveReport);
 	$('#reimburse').click(reimburse);

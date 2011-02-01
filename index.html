@@ -34,7 +34,7 @@
 				</tr>
 				<tr class="inputRow">
 					<td class='receiptCol'>
-						<img width="50px" height="50px">
+						<img width="0px" height="0px" class='receiptImage'>
 						<form action="/receipt/image" method="POST" class="imageForm" enctype="multipart/form-data"> 
 							<input type="file" name='receipt' class='file'>
 						</form>
@@ -47,6 +47,8 @@
 				</tr>
 			</table>
 		</div>
+		<div id='zoom' style='display: none;'></div>
+		<div id="imageZoom" style='display: none;'><img width="500px"> </div>
 		<div id="nav">
 			<input id='save' type="button" value="Done">
 			<div id='finishedReport' style="display: none;">
