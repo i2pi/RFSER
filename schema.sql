@@ -15,6 +15,7 @@ CREATE TABLE receipt (
 	receipt_id	TEXT PRIMARY KEY,
 	report_id	TEXT REFERENCES report(report_id),
 	description	TEXT,
+	category	TEXT,
 	amount		NUMERIC(16,4)
 );
 GRANT select,update,insert ON receipt TO rfser;

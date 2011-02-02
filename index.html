@@ -30,6 +30,7 @@
 			<table>
 				<tr>
 					<th class='receiptCol'>Receipt</th>
+					<th class='categoryCol'>Category</th>
 					<th class='descriptionCol'>Description</th>
 					<th class='amountCol'>Amount</th>
 				</tr>
@@ -40,11 +41,23 @@
 							<input type="file" name='receipt' class='file'>
 						</form>
 					</td>
+					<td class='categoryCol'>
+						<select disabled='true'>
+							<option value=""></option>
+							<option value="accomodation">Accomodation</option>
+							<option value="entertainment">Entertainment</option>
+							<option value="equipment">Equipment</option>
+							<option value="food">Food</option>
+							<option value="services">Services</option>
+							<option value="transport">Transport</option>
+							<option value="other">Other</option>
+						</select>
+					</td>
 					<td class='descriptionCol'><input type="text" name='description' disabled='true'></td>
 					<td class='amountCol'><input type="text" name='amount' disabled='true'></td>
 				</tr>
 				<tr class="totalRow">
-					<td id='total' colspan='3'>$0.00</td>
+					<td id='total' colspan='4'>$0.00</td>
 				</tr>
 			</table>
 		</div>

@@ -2,11 +2,11 @@ h1 {
 	font-family: 'PT Sans';
 }
 div#main {
-	width: 690px;
+	width: 790px;
 	margin: auto;
 	font-family: 'Lekton';
 }
-input[type='text'] {
+input[type='text'], select {
 	border: none;
 	border-bottom: 1px dashed #888;
 	background: #fffadb;
@@ -23,7 +23,7 @@ input[type='button'] {
 	height: 2.1em;
 }
 
-input[type='text']:disabled {
+input[type='text']:disabled, select:disabled {
 	background: #fafafa;
 	border-bottom: 1px dashed #ccc;
 	color: #000;
@@ -56,8 +56,12 @@ img.receiptImage {
 }
 
 .amountCol, input[name='amount'] {
-	width: 150px;
+	width: 100px;
 	text-align: right;
+}
+
+.descriptionCol {
+	width: 100px;
 }
 
 .inputRow {

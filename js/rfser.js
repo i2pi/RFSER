@@ -70,6 +70,16 @@ function validate() {
 		}
 	});
 
+	$('.inputRow > td > select:enabled').each(function(idx,e){
+		if ($(e).val() == '') {
+			$(e).addClass('invalid');
+			isValid = false;
+		} else {
+			$(e).removeClass('invalid');
+		}
+	});
+
+
 	$('.inputRow > td > input[name="amount"]:enabled').each(function(idx,e){
 		var amt = parseMoney($(e).val());
 		if (amt <= 0 || isNaN(amt)) {
@@ -123,6 +133,7 @@ function addRow() {
 
 
 	$('.inputRow:last > td > input').removeAttr('disabled');
+	$('.inputRow:last > td > select').removeAttr('disabled');
 
 	$(clone).css('display', 'none');
 
@@ -159,7 +170,8 @@ function saveReport() {
 		if (receipt_id != undefined) {
 			var amount = $(e).find('input[name="amount"]').val();
 			var description = $(e).find('input[name="description"]').val();
-			receipts.push({receipt_id: receipt_id, amount: amount, description: description});
+			var category = $(e).find('select').val();
+			receipts.push({receipt_id: receipt_id, category: category, amount: amount, description: description});
 		}
 	});
 
@@ -170,6 +182,9 @@ function saveReport() {
 
 function disableReportInputs() {
 	$('.inputRow').find('input').each(function(idx,e){
+		$(e).attr('disabled', 'true');
+	});
+	$('.inputRow').find('select').each(function(idx,e){
 		$(e).attr('disabled', 'true');
 	});
 	$('#reportName').attr('disabled','true');
@@ -187,13 +202,15 @@ function submitReport() {
 	});
 }
 
-function createReceipt(receipt_id, description, amount) {
+function createReceipt(receipt_id, category, description, amount) {
 	var clone = emptyInputRow.clone();
 	$(clone).attr('receipt_id', receipt_id);
 	$(clone).find('input[name="amount"]').val(amount);
 	$(clone).find('input[name="amount"]').removeAttr('disabled');
 	$(clone).find('input[name="description"]').val(description);
 	$(clone).find('input[name="description"]').removeAttr('disabled');
+	$(clone).find('select').val(category);
+	$(clone).find('select').removeAttr('disabled');
 	$(clone).find('input:file').remove();
 	$(clone).find('.imageForm').css('background','none');
 	var img = $(clone).find('img');
@@ -228,7 +245,7 @@ function loadReport(data) {
 
 	var receipts = details['receipts'];
 	for (r in details['receipts']) {
-		createReceipt(receipts[r]['receipt_id'], receipts[r]['description'], receipts[r]['amount']);
+		createReceipt(receipts[r]['receipt_id'], receipts[r]['category'], receipts[r]['description'], receipts[r]['amount']);
 	}
 	
 	$('.inputRow > td > input[name="amount"]').keyup(calcTotal);

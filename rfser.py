@@ -87,14 +87,14 @@ class ReportDetails:
 		if employee is None:
 			employee = ''
 
-		cur.execute("""SELECT receipt_id, COALESCE(amount,0), COALESCE(description, '')
+		cur.execute("""SELECT receipt_id, COALESCE(category, ''), COALESCE(amount,0), COALESCE(description, '')
 		               FROM receipt WHERE report_id = %(report_id)s""",
 		            {'report_id': report_id})
 	
 		rows = cur.fetchall();
 		jrow = []
 		for r in rows:
-			jrow.append('{\"receipt_id\": \"%s\",\"amount\": %s, \"description\": \"%s\"}' % (r[0], r[1], r[2]))
+			jrow.append('{\"receipt_id\": \"%s\",\"category\": \"%s\",\"amount\": %s, \"description\": \"%s\"}' % (r[0], r[1], r[2], r[3]))
 		receipts ='[' + ','.join(jrow) + ']'
 
 		conn.close()
@@ -138,7 +138,7 @@ class ReportDetails:
 				r['amount'] = None
 			
 			cur.execute("""UPDATE receipt 
-		   	            SET amount=%(amount)s, description = %(description)s 
+		   	            SET amount=%(amount)s, description = %(description)s, category=%(category)s
 		   	            WHERE receipt_id = %(receipt_id)s AND report_id = %(report_id)s""", r)
 		conn.commit()
 
