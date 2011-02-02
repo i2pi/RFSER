@@ -3,6 +3,8 @@ var receiptUploadOptions = {
 	dataType: 'json'
 };
 
+var emptyInputRow;
+
 function parseMoney(str) {
 	var x = str.replace(/[$,]/g, '');
 	return parseFloat(x);
@@ -114,7 +116,7 @@ function addRow() {
 	var summary = $('.totalRow').clone();
 	$('.totalRow').remove();
 
-	var clone = $('.inputRow:last').clone()
+	var clone = emptyInputRow.clone();
 
 	$('.inputRow:last > td > form.imageForm').css('background','url(/img/spinner.gif) 0 0 no-repeat');
 	$('.inputRow:last > td > form.imageForm').ajaxSubmit(receiptUploadOptions);
@@ -138,34 +140,60 @@ function addRow() {
 }
 
 function saveReport() {
-	var isValid = validate();
-
-	if (!isValid) return;
-
 	var reportName = $('input#reportName').val();
 	var employee = $('input#employee').val();
 
-	$.post(window.location.pathname, {reportName: reportName, employee: employee});
+
+	if (reportName == 'Report Name' || reportName.length == 0) {
+		reportName = '';
+	}
+
+	if (employee == 'Your Name' || employee.length == 0) {
+		employee = '';
+	}
+
+	var receipts = [];
 
 	$('.inputRow').each(function(idx,e) {
 		var receipt_id = $(e).attr('receipt_id');
 		if (receipt_id != undefined) {
 			var amount = $(e).find('input[name="amount"]').val();
 			var description = $(e).find('input[name="description"]').val();
-			$.post('/receipt/' + receipt_id + '/details', {amount: amount, description: description});
+			receipts.push({receipt_id: receipt_id, amount: amount, description: description});
 		}
 	});
 
-	$('#save').fadeOut(function(){
-		$('#finishedReport').fadeIn();
-	});	
+	var report = {reportName: reportName, employee: employee, receipts: receipts};
+
+	$.post(window.location.pathname + '.json', {report: JSON.stringify(report)});
+}
+
+function disableReportInputs() {
+	$('.inputRow').find('input').each(function(idx,e){
+		$(e).attr('disabled', 'true');
+	});
+	$('#reportName').attr('disabled','true');
+	$('#employee').attr('disabled','true');
+}
+
+function submitReport() {
+	if (!validate()) return;
+	saveReport();
+	disableReportInputs();
+	$.post(window.location.pathname + '/submit', function() {
+		$('#save').fadeOut(function(){
+			$('#finishedReport').fadeIn();
+		});	
+	});
 }
 
 function createReceipt(receipt_id, description, amount) {
-	var clone = $('.inputRow:last').clone()
+	var clone = emptyInputRow.clone();
+	$(clone).attr('receipt_id', receipt_id);
 	$(clone).find('input[name="amount"]').val(amount);
+	$(clone).find('input[name="amount"]').removeAttr('disabled');
 	$(clone).find('input[name="description"]').val(description);
-	$(clone).find('input[name="description"]').val(description);
+	$(clone).find('input[name="description"]').removeAttr('disabled');
 	$(clone).find('input:file').remove();
 	$(clone).find('.imageForm').css('background','none');
 	var img = $(clone).find('img');
@@ -176,41 +204,47 @@ function createReceipt(receipt_id, description, amount) {
 	$(clone).appendTo('table');
 }
 
-function loadReportReceipts(data) {
-	var receipts = eval(data); // TODO : evil
 
-	for (r in receipts) {
-		createReceipt(receipts[r]['receipt_id'], receipts[r]['description'], receipts[r]['amount']);
-	}
+function loadReport(data) {
+	var details = $.parseJSON(data);
+	var submitted = false;
+	if (details['submitted'] != 'No') submitted = true;
 
-	if (receipts.length > 0) {
-		// If there is any data, don't let people add more data
-		$('.inputRow:first').remove();
-		$('#save').remove();
-
-		$('#finishedReport').show();
-
-		var clone = $('.totalRow').clone();
-		$('.totalRow').remove();
-		$(clone).appendTo('table');
-		calcTotal();	
-	}
-}
-
-function loadReportDetails(data) {
-	var details = eval(data)[0]; //TODO: Evil
 	if (details['reportName'] != '') {
 		$('input#reportName').val(details['reportName']);
-		$('input#reportName').attr('disabled', 'true');
+		if (submitted) $('input#reportName').attr('disabled', 'true');
 		$('#reportName_placeholder').hide();
 	}
 	if (details['employee'] != '') {
 		$('input#employee').val(details['employee']);
-		$('input#employee').attr('disabled', 'true');
+		if (submitted) $('input#employee').attr('disabled', 'true');
 		$('#employee_placeholder').hide();
 	}
 	$('li#reimbursed > span').text(details['reimbursed']);
 	if (details['reimbursed'] != 'No') $('#reimburse').hide();
+
+	var total = $('.totalRow').clone();
+	$('.totalRow').remove();
+
+	var receipts = details['receipts'];
+	for (r in details['receipts']) {
+		createReceipt(receipts[r]['receipt_id'], receipts[r]['description'], receipts[r]['amount']);
+	}
+	
+	$('.inputRow > td > input[name="amount"]').keyup(calcTotal);
+	
+	if (submitted) {
+		disableReportInputs();
+		$('#save').remove();
+		$('#finishedReport').show();
+	} else {
+		var clone = emptyInputRow.clone();
+		$(clone).appendTo('table');
+		$('.inputRow:last > td > form > input:file').change(addRow);
+	}
+
+	$(total).appendTo('table');
+	calcTotal();	
 }
 
 function collect () {
@@ -221,34 +255,38 @@ function collect () {
 
 function reimburse () {
 	$.post(window.location.pathname + '/reimburse', function (){
-		$.get(window.location.pathname + '/details', loadReportDetails);
+		$.get(window.location.pathname + '.json', loadReport);
 	});
 }
 
 jQuery(document).ready(function() {
+
+	$('.inputRow:last > td > form.imageForm').ajaxForm();
+	$('.inputRow:last > td > form > input:file').change(addRow);
+	$('.inputRow > td > input[name="amount"]').keyup(calcTotal);
+	$('.inputRow > td > input[name="amount"]').change(calcTotal);
+	emptyInputRow = $('.inputRow:last').clone();
+	$('.inputRow:last').remove();
+
 	$('input[placeholder],textarea[placeholder]').placeholder();
 	$('#reportName').focus();
 	$('#reportName').keypress(function(){
 		$('#reportName_placeholder').hide();
 	});
 
+	$('#reportName').change(saveReport);	
+	$('#employee').change(saveReport);	
+
 	SI.Files.stylizeAll();
 
-	$.get(window.location.pathname + '/receipts', loadReportReceipts);
-	$.get(window.location.pathname + '/details', loadReportDetails);
-
-	$('.inputRow:last > td > form.imageForm').ajaxForm();
+	$.get(window.location.pathname + '.json', loadReport);
 
 	$('#imageZoom').click(function(){
 		$('#zoom').hide();
 		$('#imageZoom').hide();
 	});
 
-	$('#save').click(saveReport);
+	$('#save').click(submitReport);
 	$('#reimburse').click(reimburse);
 	$('#collect').click(collect);
-
-	$('.inputRow:last > td > form > input:file').change(addRow);
-	$('.inputRow > td > input[name="amount"]').keyup(calcTotal);
-	$('.inputRow > td > input[name="amount"]').change(calcTotal);
 })
